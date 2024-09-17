@@ -1,12 +1,25 @@
 import { LeetCode } from "leetcode-query";
 import { MongoClient } from "mongodb";
 import dotenv from "dotenv";
+import nodemailer from "nodemailer";
+import get_html from "./create_template.js";
+
 // Load environment variables from .env file
 dotenv.config();  
 
 //create leetcode object
 const leetcode = new LeetCode();
 const leetcodeProblemBase = 'https://leetcode.com/problems/'
+
+
+const transporter = nodemailer.createTransport({
+        service:'gmail',
+        auth: {
+          user: "siddhantkale400@gmail.com",
+          pass: "mepk koyd zpdm oipu",
+        },
+      });
+
 
 //mongodb connection data
 const uri = process.env.MONGODB_URI;
@@ -23,7 +36,7 @@ async function getAvailableProblems(difficulty){
 
     //filter non-premium problems
     problems = problems.filter((problem)=>{
-        return problem["isPaidOnly"] ===false;
+        return problem["isPaidOnly"] === false;
     });
     return problems;
 }
@@ -81,4 +94,20 @@ const unsolvedHard = getUnsolved("Hard",hardProblems,solvedSet);
 const easyProblem = unsolvedEasy[Math.floor(Math.random()*unsolvedEasy.length)];
 const medProblem = unsolvedMedium[Math.floor(Math.random()*unsolvedMedium.length)];
 const hardProblem = unsolvedHard[Math.floor(Math.random()*unsolvedHard.length)];
-console.log(easyProblem);
+
+const mailOptions = {
+    from: process.env.EMAIL_USER,
+    to: 'siddhantkale300@gmail.com',
+    subject: "Achieve Greatness: Unlock Today's Top 3 LeetCode Problems!",
+    html: get_html(easyProblem,medProblem,hardProblem ),
+  };
+async function notifyUser(){
+      try {
+        const info = await transporter.sendMail(mailOptions);
+        console.log('Message sent: %s', info.messageId);
+      } catch (error) {
+        console.error('Error occurred:', error.message);
+      }
+      
+}
+notifyUser();
