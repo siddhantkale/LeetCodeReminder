@@ -5,20 +5,20 @@ import nodemailer from "nodemailer";
 import get_html from "./create_template.js";
 
 // Load environment variables from .env file
-dotenv.config();  
+dotenv.config(); 
 
 //create leetcode object
 const leetcode = new LeetCode();
 const leetcodeProblemBase = 'https://leetcode.com/problems/'
 
-
+//nodemailer  transporter details
 const transporter = nodemailer.createTransport({
         service:'gmail',
         auth: {
-          user: "siddhantkale400@gmail.com",
-          pass: "mepk koyd zpdm oipu",
+          user: process.env.MAIL,
+          pass: process.env.PASS,
         },
-      });
+});
 
 
 //mongodb connection data
@@ -26,6 +26,46 @@ const uri = process.env.MONGODB_URI;
 const client = new MongoClient(uri);
 const dbName = "Leetcode";//your database name
 const collectionName = "solved_problems";//your collection name
+
+
+//function to add solved problems based on recent user submissions
+async function addSolved(){
+    try{
+        //get recent user AC submissions
+        const response = await leetcode.user("siddhantkale300");
+        const recent20Submissions = response["recentSubmissionList"];
+        const recentSolved = new Set();
+        recent20Submissions.forEach((submission)=>{
+            if(submission['statusDisplay']=="Accepted"){
+                recentSolved.add(submission["title"]);
+            }
+        });
+
+        //connect to client and access collection
+        await client.connect();
+        const db = client.db(dbName);
+        const collection = db.collection(collectionName);
+
+        //upsert AC problems 
+        for (const problem of recentSolved) {
+            await collection.updateOne(
+                { title: problem }, 
+                { $setOnInsert: { 'title': problem } }, 
+                { upsert: true }
+            );
+        }
+        console.log("success");
+        await client.close();
+    }
+    catch(err){
+        console.error(err);
+    }
+   
+}
+await addSolved();
+
+
+
 
 //get all non-premium problems
 async function getAvailableProblems(difficulty){
@@ -81,7 +121,7 @@ const solvedProblems = await getSolvedProblems()
 const solvedSet = new Set();
 solvedProblems.forEach((problem)=>{
     solvedSet.add(problem);
-})
+});
 
 
 //get unsolved problems by diffculty
@@ -95,19 +135,25 @@ const easyProblem = unsolvedEasy[Math.floor(Math.random()*unsolvedEasy.length)];
 const medProblem = unsolvedMedium[Math.floor(Math.random()*unsolvedMedium.length)];
 const hardProblem = unsolvedHard[Math.floor(Math.random()*unsolvedHard.length)];
 
+
+//set up mailOptions
 const mailOptions = {
-    from: process.env.EMAIL_USER,
-    to: 'siddhantkale300@gmail.com',
+    from: process.env.MAIL,
+    to: process.env.REC_MAIL,
     subject: "Achieve Greatness: Unlock Today's Top 3 LeetCode Problems!",
+    //get html template
     html: get_html(easyProblem,medProblem,hardProblem ),
-  };
+}; 
+
 async function notifyUser(){
-      try {
-        const info = await transporter.sendMail(mailOptions);
-        console.log('Message sent: %s', info.messageId);
-      } catch (error) {
-        console.error('Error occurred:', error.message);
-      }
-      
+    //send mail to user
+   try {
+            const info = await transporter.sendMail(mailOptions);
+            console.log('Message sent: %s', info.messageId);
+          } catch (error) {
+            console.error('Error occurred:', error.message);
+          }   
 }
+
+//notify user about problems
 notifyUser();
