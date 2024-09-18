@@ -26,4 +26,4 @@ jobs:
           MAIL: ${{ secrets.MAIL }}
           PASS: ${{ secrets.PASS }}
           REC_MAIL: ${{ secrets.REC_MAIL }}
-        run: node path/to/update_submissions.js
+        run: node update_submissions.js
