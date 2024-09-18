@@ -3,6 +3,8 @@ import { MongoClient } from "mongodb";
 import dotenv from "dotenv";
 import nodemailer from "nodemailer";
 import get_html from "./create_template.js";
+import getAppreciation from "./appreciation.js";
+import getReminder from "./reminder.js";
 
 // Load environment variables from .env file
 dotenv.config();
@@ -25,7 +27,7 @@ const uri = process.env.MONGODB_URI;
 const client = new MongoClient(uri);
 const dbName = "Leetcode"; //your database name
 const collectionName = "solved_problems"; //your collection name
-const secondCollection = "daily_questions";//second collection to manage daily questions
+const secondCollection = "daily_questions"; //second collection to manage daily questions
 
 //get all non-premium problems
 async function getAvailableProblems(difficulty) {
@@ -76,28 +78,29 @@ function getUnsolved(difficulty, availableProblems, solvedSet) {
   return unsolved;
 }
 
-
 //function to add daily questions for tracking status  to db
-async function addToDailyQuestions(easy,medium,hard) {
+async function addToDailyQuestions(easy, medium, hard) {
   await client.connect();
   const db = client.db(dbName);
   const collection = db.collection(secondCollection);
-    
-  const problems = [{
-    'title':easy['title'],
-  },{
-    'title':medium['title'],
-  },{
-    'title':hard['title'],
-  }];
- 
- //insert into db
+
+  const problems = [
+    {
+      title: easy["title"],
+    },
+    {
+      title: medium["title"],
+    },
+    {
+      title: hard["title"],
+    },
+  ];
+
+  //insert into db
   const response = await collection.insertMany(problems);
-  
 
   await client.close();
 }
-
 
 async function sendProblems() {
   //non-premium available problems according to difficulty
@@ -109,7 +112,7 @@ async function sendProblems() {
   const solvedProblems = await getSolvedProblems();
   const solvedSet = new Set();
   solvedProblems.forEach((problem) => {
-    solvedSet.add(problem);
+    solvedSet.add(problem["title"]);
   });
 
   //get unsolved problems by diffculty
@@ -126,8 +129,8 @@ async function sendProblems() {
     unsolvedHard[Math.floor(Math.random() * unsolvedHard.length)];
 
   //update daily questions collection
-  await addToDailyQuestions(easyProblem,medProblem,hardProblem);
- 
+  await addToDailyQuestions(easyProblem, medProblem, hardProblem);
+
   //set up mailOptions
   const mailOptions = {
     from: process.env.MAIL,
@@ -146,36 +149,112 @@ async function sendProblems() {
   }
 }
 
-
 //function to clear yesterday's daily questions
-async function  clearDailyQuestions() {
-    await client.connect();
-    const db = client.db(dbName);
-    const collection = db.collection(secondCollection);
+async function clearDailyQuestions() {
+  await client.connect();
+  const db = client.db(dbName);
+  const collection = db.collection(secondCollection);
 
-    //clear all records in daily questions
-    await collection.deleteMany({});
+  //clear all records in daily questions
+  await collection.deleteMany({});
 
-    await client.close();
+  await client.close();
 }
 
+//function to check if solved daily questions
+async function completedQuestions() {
+  await client.connect();
+  const db = client.db(dbName);
+  const collection = db.collection(secondCollection);
 
+  //retrieve today's questions
+  const questions = await collection
+    .find({}, { projection: { _id: 0 } })
+    .toArray();
+
+  //get all solved problems
+  const solvedProblems = await getSolvedProblems();
+  const solvedSet = new Set();
+  solvedProblems.forEach((problem) => {
+    solvedSet.add(problem["title"]);
+  });
+
+  //check if all daily problems are solved
+  var solvedAll = true;
+  questions.forEach((question) => {
+    if (!solvedSet.has(question["title"])) {
+      solvedAll = false;
+      console.log("changed");
+    }
+  });
+
+  await client.close();
+  return solvedAll;
+}
+
+//function to send appreciation mail
+async function sendAppreciation(params) {
+  const mailOptions = {
+    from: process.env.MAIL,
+    to: process.env.REC_MAIL,
+    subject: "You’re on Fire! Keep Pushing Towards Greatness!",
+    //get html template
+    html: getAppreciation(),
+  };
+  //send actual mail
+  try {
+    const info = await transporter.sendMail(mailOptions);
+    console.log("Message sent: %s", info.messageId);
+  } catch (error) {
+    console.error("Error occurred:", error.message);
+  }
+  await client.close();
+}
+
+//function to send reminder
+async function sendReminder() {
+  await client.connect();
+  const db = client.db(dbName);
+  const collection = db.collection(secondCollection);
+
+  //retrieve today's questions
+  const questions = await collection
+    .find({}, { projection: { _id: 0 } })
+    .toArray();
+  
+  const mailOptions = {
+    from: process.env.MAIL,
+    to: process.env.REC_MAIL,
+    subject: "Stay on Track: Every Step Brings You Closer to Your Goals",
+    //get html template
+    html: getReminder(questions[0]['title'],questions[1]['title'],questions[2]['title']),
+  };
+
+  //send actual mail
+  try {
+    const info = await transporter.sendMail(mailOptions);
+    console.log("Message sent: %s", info.messageId);
+  } catch (error) {
+    console.error("Error occurred:", error.message);
+  }
+  await client.close();
+}
 
 //create a new date object
 const now = new Date();
 const currentHour = now.getHours();
 
 //send problems at 7 am
-if(currentHour==7){
-    sendProblems();
-
-}//clear yesterday's daily questions
-else if(currentHour==0){
-    clearDailyQuestions();
-}//at other hours send reminder or appreciation message according to status 
-else{
-    
+if (currentHour == 7) {
+  sendProblems();
+} //clear yesterday's daily questions
+else if (currentHour == 0) {
+  clearDailyQuestions();
+} //at other hours send reminder or appreciation message according to status
+else {
+  if (await completedQuestions()) {
+    sendAppreciation();
+  } else {
+    sendReminder();
+  }
 }
-
-
-

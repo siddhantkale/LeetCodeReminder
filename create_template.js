@@ -66,4 +66,5 @@ function get_html(easy,medium,hard){
 </html>
 `
 }
+
 export default get_html
