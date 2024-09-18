@@ -10,7 +10,7 @@ dotenv.config();
 //create leetcode object
 const leetcode = new LeetCode();
 const leetcodeProblemBase = 'https://leetcode.com/problems/'
-
+console.log(process.env.MONGODB_URI);
 //nodemailer  transporter details
 const transporter = nodemailer.createTransport({
         service:'gmail',
