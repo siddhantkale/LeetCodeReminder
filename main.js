@@ -10,7 +10,7 @@ dotenv.config();
 //create leetcode object
 const leetcode = new LeetCode();
 const leetcodeProblemBase = 'https://leetcode.com/problems/'
-console.log(process.env.MONGODB_URI);
+
 //nodemailer  transporter details
 const transporter = nodemailer.createTransport({
         service:'gmail',
@@ -26,45 +26,6 @@ const uri = process.env.MONGODB_URI;
 const client = new MongoClient(uri);
 const dbName = "Leetcode";//your database name
 const collectionName = "solved_problems";//your collection name
-
-
-//function to add solved problems based on recent user submissions
-async function addSolved(){
-    try{
-        //get recent user AC submissions
-        const response = await leetcode.user("siddhantkale300");
-        const recent20Submissions = response["recentSubmissionList"];
-        const recentSolved = new Set();
-        recent20Submissions.forEach((submission)=>{
-            if(submission['statusDisplay']=="Accepted"){
-                recentSolved.add(submission["title"]);
-            }
-        });
-
-        //connect to client and access collection
-        await client.connect();
-        const db = client.db(dbName);
-        const collection = db.collection(collectionName);
-
-        //upsert AC problems 
-        for (const problem of recentSolved) {
-            await collection.updateOne(
-                { title: problem }, 
-                { $setOnInsert: { 'title': problem } }, 
-                { upsert: true }
-            );
-        }
-        console.log("success");
-        await client.close();
-    }
-    catch(err){
-        console.error(err);
-    }
-   
-}
-await addSolved();
-
-
 
 
 //get all non-premium problems
@@ -96,7 +57,6 @@ async function getSolvedProblems(){
 
 function getUnsolved(difficulty,availableProblems,solvedSet){
     const unsolved = [];
-
     //perform check on all problems
     //check if unsolved and difficulty matches
     availableProblems.forEach((problem)=>{

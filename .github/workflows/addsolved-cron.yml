@@ -1,0 +1,29 @@
+name: Run AddSolved Function
+
+on:
+  # Schedule the action to run every 20 minutes
+  schedule:
+    - cron: '*/20 * * * *'
+  
+jobs:
+  run-addsolved:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v2
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v2
+        with:
+          node-version: '20'
+
+      - name: Install dependencies
+        run: npm install
+
+      - name: Run addSolved function
+        env:
+          MONGODB_URI: ${{ secrets.MONGODB_URI }}
+          MAIL: ${{ secrets.MAIL }}
+          PASS: ${{ secrets.PASS }}
+          REC_MAIL: ${{ secrets.REC_MAIL }}
+        run: node path/to/addSolved.js
