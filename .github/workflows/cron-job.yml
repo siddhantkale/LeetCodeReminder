@@ -3,7 +3,14 @@ name: Run LeetCode Daily Tracker
 on:
   workflow_dispatch:
   schedule:
-    - cron: '0 0,7,15,20 * * *'
+      # 12 AM IST (6:30 PM UTC the previous day)
+      - cron: '30 18 * * *'
+      # 7 AM IST (1:30 AM UTC)
+      - cron: '30 1 * * *'
+      # 3 PM IST (9:30 AM UTC)
+      - cron: '30 9 * * *'
+      # 8 PM IST (2:30 PM UTC)
+      - cron: '30 14 * * *'
 
 jobs:
   run-script:

@@ -193,7 +193,7 @@ async function completedQuestions() {
 }
 
 //function to send appreciation mail
-async function sendAppreciation(params) {
+async function sendAppreciation() {
   const mailOptions = {
     from: process.env.MAIL,
     to: process.env.REC_MAIL,
@@ -242,21 +242,30 @@ async function sendReminder() {
 
 // Create a new date object
 const now = new Date();
-const currentHour = now.getHours();
-const currentMinutes = now.getMinutes();
+const currentHour = now.getUTCHours();  // Use UTC hours
+const currentMinutes = now.getUTCMinutes();  // Use UTC minutes
+
 
 // Add a buffer to check if the job runs within 1 hour of the expected time
 
-// Clear yesterday's daily questions if it's between 12 AM and 1 AM
-if (currentHour === 0 || (currentHour === 1 && currentMinutes < 59)) {
+// Clear yesterday's daily questions if it's between 6:30 PM UTC and 7:30 PM UTC
+if ((currentHour === 18 && currentMinutes >= 30) || (currentHour === 19 && currentMinutes < 59)) {
   clearDailyQuestions();
 }
-// Send problems at 7 AM (or if it's delayed slightly, between 7 AM and 8 AM)
-else if (currentHour === 7 || (currentHour === 8 && currentMinutes < 59)) {
+// Send problems at 1:30 AM UTC (7 AM IST)
+else if ((currentHour === 1 && currentMinutes >= 30) || (currentHour === 2 && currentMinutes < 59)) {
   sendProblems();
-} 
-// Send reminder or appreciation message according to the solved status at other hours
-else {
+}
+// Send reminder or appreciation message at 9:30 AM UTC (3 PM IST)
+else if ((currentHour === 9 && currentMinutes >= 30) || (currentHour === 10 && currentMinutes < 59)) {
+  if (await completedQuestions()) {
+    sendAppreciation();
+  } else {
+    sendReminder();
+  }
+}
+// Send reminder or appreciation message at 2:30 PM UTC (8 PM IST)
+else if ((currentHour === 14 && currentMinutes >= 30) || (currentHour === 15 && currentMinutes < 59)) {
   if (await completedQuestions()) {
     sendAppreciation();
   } else {
