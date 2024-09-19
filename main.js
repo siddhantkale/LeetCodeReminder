@@ -240,17 +240,22 @@ async function sendReminder() {
   await client.close();
 }
 
-//create a new date object
+// Create a new date object
 const now = new Date();
 const currentHour = now.getHours();
+const currentMinutes = now.getMinutes();
 
-//send problems at 7 am
-if (currentHour == 7) {
-  sendProblems();
-} //clear yesterday's daily questions
-else if (currentHour == 0) {
+// Add a buffer to check if the job runs within 1 hour of the expected time
+
+// Clear yesterday's daily questions if it's between 12 AM and 1 AM
+if (currentHour === 0 || (currentHour === 1 && currentMinutes < 59)) {
   clearDailyQuestions();
-} //at other hours send reminder or appreciation message according to status
+}
+// Send problems at 7 AM (or if it's delayed slightly, between 7 AM and 8 AM)
+else if (currentHour === 7 || (currentHour === 8 && currentMinutes < 59)) {
+  sendProblems();
+} 
+// Send reminder or appreciation message according to the solved status at other hours
 else {
   if (await completedQuestions()) {
     sendAppreciation();
