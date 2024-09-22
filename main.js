@@ -253,7 +253,7 @@ if ((currentHour === 18 && currentMinutes >= 30) || (currentHour === 19 && curre
   clearDailyQuestions();
 }
 // Send problems at 1:30 AM UTC (7 AM IST)
-else if ((currentHour === 1 && currentMinutes >= 30) || (currentHour === 2 && currentMinutes < 59)) {
+else if ((currentHour===0 ) || (currentHour === 1 ) || (currentHour === 2 && currentMinutes < 30)) {
   sendProblems();
 }
 // Send reminder or appreciation message at 9:30 AM UTC (3 PM IST)
