@@ -10,7 +10,7 @@ on:
       # 3 PM IST (9:30 AM UTC)
       - cron: '30 9 * * *'
       # 8 PM IST (2:30 PM UTC)
-      - cron: '30 14 * * *'
+      - cron: '0 16 * * *'
 
 jobs:
   run-script:

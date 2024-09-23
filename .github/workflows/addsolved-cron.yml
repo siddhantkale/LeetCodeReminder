@@ -2,7 +2,9 @@ name: Run AddSolved Function
 
 on:
   # Schedule the action to run every 20 minutes
+  workflow_dispatch:
   schedule:
+    
     - cron: '*/20 * * * *'
   
 jobs:
