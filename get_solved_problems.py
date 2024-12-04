@@ -13,7 +13,7 @@ import time
 def fetch_solved_problems(username, password):
     driver = webdriver.Chrome()  # Make sure to have ChromeDriver installed
     driver.get('https://leetcode.com/accounts/login/')
-
+    time.sleep(5)
     # Log in to leetcode
     driver.find_element(By.ID, 'id_login').send_keys(username)
     driver.find_element(By.ID, 'id_password').send_keys(password)
@@ -33,7 +33,6 @@ def fetch_solved_problems(username, password):
         #check if submissions are present
         if(driver.find_elements(By.XPATH,"//*[@id='submission-list-app']/div/table/tbody/tr[5]") == []):
             break
-
         #get all accepted submissions
         rows = driver.find_elements(By.XPATH, "//tr[td[3]/a/strong[text()='Accepted']]")
         for row in rows:
@@ -50,8 +49,8 @@ def fetch_solved_problems(username, password):
 
 
 # enter your credentials for your use
-username = 'your leetcode username'
-password = 'your leetcode password'
+username = 'your username'
+password = 'your password'
 
 #convert set to list for json operations
 solved_problems = list(fetch_solved_problems(username, password))
