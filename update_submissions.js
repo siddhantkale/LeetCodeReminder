@@ -18,7 +18,7 @@ const collectionName = "solved_problems";//your collection name
 async function addSolved(){
     try{
         //get recent user AC submissions
-        const response = await leetcode.user("siddhantkale7");
+        const response = await leetcode.user("sid-x-29");
         const recent20Submissions = response["recentSubmissionList"];
         const recentSolved = new Set();
         recent20Submissions.forEach((submission)=>{
